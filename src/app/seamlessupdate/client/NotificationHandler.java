@@ -68,7 +68,6 @@ public class NotificationHandler {
 
         final NotificationChannel failure = new NotificationChannel(NOTIFICATION_CHANNEL_ID_FAILURE,
                 context.getString(R.string.notification_channel_failure), IMPORTANCE_LOW);
-        failure.setBlockable(true);
         channels.add(failure);
 
         final NotificationChannel updated = new NotificationChannel(NOTIFICATION_CHANNEL_ID_UPDATED,
