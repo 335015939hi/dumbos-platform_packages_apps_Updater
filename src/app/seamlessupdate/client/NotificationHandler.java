@@ -29,16 +29,21 @@ public class NotificationHandler {
     private static final int NOTIFICATION_ID_REBOOT = 2;
     private static final int NOTIFICATION_ID_FAILURE = 3;
     private static final int NOTIFICATION_ID_UPDATED = 4;
-    private static final int MAX_NOTIFICATION_ID_FOR_SERVICE = NOTIFICATION_ID_UPDATED;
+    private static final int NOTIFICATION_ID_AVAILABLE = 5;
+    private static final int NOTIFICATION_ID_DOWNLOADED = 6;
+    private static final int MAX_NOTIFICATION_ID_FOR_SERVICE = NOTIFICATION_ID_DOWNLOADED;
     private static final int NOTIFICATION_ID_SET_SECURITY_PREVIEW = 1000;
     private static final String NOTIFICATION_CHANNEL_ID_PROGRESS = "progress";
     private static final String NOTIFICATION_CHANNEL_ID_REBOOT = "updates2";
     private static final String NOTIFICATION_CHANNEL_ID_FAILURE = "failure";
     private static final String NOTIFICATION_CHANNEL_ID_UPDATED = "updated";
+    private static final String NOTIFICATION_CHANNEL_ID_AVAILABLE = "available";
+    private static final String NOTIFICATION_CHANNEL_ID_DOWNLOADED = "downloaded";
     private static final String NOTIFICATION_CHANNEL_ID_SET_SECURITY_PREVIEW = "set_security_preview";
     private static final int PENDING_REBOOT_ID = 1;
     private static final int PENDING_SETTINGS_ID = 2;
     private static final int PENDING_SECURITY_PREVIEW_SETTINGS_ID = 3;
+    private static final int PENDING_INSTALL_ID = 4;
 
     private final Service service;
     private final NotificationManager notificationManager;
@@ -76,6 +81,20 @@ public class NotificationHandler {
         updated.setShowBadge(false);
         updated.setBlockable(true);
         channels.add(updated);
+
+        final NotificationChannel available = new NotificationChannel(NOTIFICATION_CHANNEL_ID_AVAILABLE,
+                context.getString(R.string.notification_channel_available), IMPORTANCE_HIGH);
+        available.enableLights(true);
+        available.enableVibration(true);
+        available.setBlockable(true);
+        channels.add(available);
+
+        final NotificationChannel downloaded = new NotificationChannel(NOTIFICATION_CHANNEL_ID_DOWNLOADED,
+                context.getString(R.string.notification_channel_downloaded), IMPORTANCE_HIGH);
+        downloaded.enableLights(true);
+        downloaded.enableVibration(true);
+        downloaded.setBlockable(true);
+        channels.add(downloaded);
 
         final NotificationChannel setSecurityPreview = new NotificationChannel(NOTIFICATION_CHANNEL_ID_SET_SECURITY_PREVIEW,
                 context.getString(R.string.notification_channel_set_security_preview), IMPORTANCE_HIGH);
@@ -189,6 +208,45 @@ public class NotificationHandler {
                 .setContentTitle(service.getString(R.string.notification_reboot_title))
                 .setContentText(service.getString(R.string.notification_reboot_text))
                 .setOngoing(true)
+                .setShowWhen(true)
+                .setTimeoutAfter(-1)
+                .setSmallIcon(R.drawable.system_update_fill0_wght400_grad0_opsz48)
+                .build());
+    }
+
+    private PendingIntent getPendingInstallIntent() {
+        return PendingIntent.getBroadcast(service, PENDING_INSTALL_ID,
+                new Intent(service, InstallReceiver.class), PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    void showUpdateAvailableNotification() {
+        final Notification.Action action = new Notification.Action.Builder(
+                Icon.createWithResource(service.getApplication(), R.drawable.system_update_fill0_wght400_grad0_opsz48),
+                service.getString(R.string.notification_available_action),
+                getPendingInstallIntent()).build();
+
+        notificationManager.notify(NOTIFICATION_ID_AVAILABLE, new Notification.Builder(service, NOTIFICATION_CHANNEL_ID_AVAILABLE)
+                .addAction(action)
+                .setContentIntent(getPendingInstallIntent())
+                .setContentTitle(service.getString(R.string.notification_available_title))
+                .setContentText(service.getString(R.string.notification_available_text))
+                .setShowWhen(true)
+                .setTimeoutAfter(-1)
+                .setSmallIcon(R.drawable.system_update_fill0_wght400_grad0_opsz48)
+                .build());
+    }
+
+    void showUpdateDownloadedNotification() {
+        final Notification.Action action = new Notification.Action.Builder(
+                Icon.createWithResource(service.getApplication(), R.drawable.system_update_fill0_wght400_grad0_opsz48),
+                service.getString(R.string.notification_downloaded_action),
+                getPendingInstallIntent()).build();
+
+        notificationManager.notify(NOTIFICATION_ID_DOWNLOADED, new Notification.Builder(service, NOTIFICATION_CHANNEL_ID_DOWNLOADED)
+                .addAction(action)
+                .setContentIntent(getPendingInstallIntent())
+                .setContentTitle(service.getString(R.string.notification_downloaded_title))
+                .setContentText(service.getString(R.string.notification_downloaded_text))
                 .setShowWhen(true)
                 .setTimeoutAfter(-1)
                 .setSmallIcon(R.drawable.system_update_fill0_wght400_grad0_opsz48)
