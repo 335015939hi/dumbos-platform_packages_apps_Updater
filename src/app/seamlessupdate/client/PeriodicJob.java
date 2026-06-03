@@ -18,7 +18,6 @@ public class PeriodicJob extends JobService {
     private static final String TAG = "PeriodicJob";
     private static final int JOB_ID_PERIODIC = 1;
     private static final int JOB_ID_RETRY = 2;
-    private static final long INTERVAL_MILLIS = 6 * 60 * 60 * 1000;
     private static final long MIN_LATENCY_MILLIS = 4 * 60 * 1000;
     private static final String EXTRA_JOB_CHANNEL = "extra_job_channel";
 
@@ -27,14 +26,20 @@ public class PeriodicJob extends JobService {
         final int networkType = Settings.getNetworkType(context);
         final boolean batteryNotLow = Settings.getBatteryNotLow(context);
         final boolean requiresCharging = Settings.getRequiresCharging(context);
+        final long intervalMillis = Settings.getCheckFrequency(context);
         final JobScheduler scheduler = context.getSystemService(JobScheduler.class);
+        if (intervalMillis <= 0) {
+            Log.d(TAG, "manual update checks only; cancelling periodic job");
+            scheduler.cancel(JOB_ID_PERIODIC);
+            return;
+        }
         final JobInfo jobInfo = scheduler.getPendingJob(JOB_ID_PERIODIC);
         if (jobInfo != null &&
                 jobInfo.getNetworkType() == networkType &&
                 jobInfo.isRequireBatteryNotLow() == batteryNotLow &&
                 jobInfo.isRequireCharging() == requiresCharging &&
                 jobInfo.isPersisted() &&
-                jobInfo.getIntervalMillis() == INTERVAL_MILLIS &&
+                jobInfo.getIntervalMillis() == intervalMillis &&
                 Objects.equals(jobInfo.getExtras().getString(EXTRA_JOB_CHANNEL), channel)) {
             Log.d(TAG, "Periodic job already registered");
             return;
@@ -47,7 +52,7 @@ public class PeriodicJob extends JobService {
             .setRequiresBatteryNotLow(batteryNotLow)
             .setRequiresCharging(requiresCharging)
             .setPersisted(true)
-            .setPeriodic(INTERVAL_MILLIS)
+            .setPeriodic(intervalMillis)
             .setExtras(extras)
             .build());
         if (result == JobScheduler.RESULT_FAILURE) {

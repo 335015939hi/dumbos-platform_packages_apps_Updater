@@ -10,6 +10,22 @@
             app:allowDividerBelow="false"
             app:iconSpaceReserved="false">
 
+        <ListPreference app:key="check_frequency"
+                app:title="@string/check_frequency_title"
+                app:iconSpaceReserved="false"
+                app:useSimpleSummaryProvider="true"
+                app:entries="@array/check_frequency_entries"
+                app:entryValues="@array/check_frequency_values"
+                app:defaultValue="@string/check_frequency_default" />
+
+        <ListPreference app:key="update_behavior"
+                app:title="@string/update_behavior_title"
+                app:iconSpaceReserved="false"
+                app:useSimpleSummaryProvider="true"
+                app:entries="@array/update_behavior_entries"
+                app:entryValues="@array/update_behavior_values"
+                app:defaultValue="@string/update_behavior_default" />
+
         <ListPreference app:key="channel"
                 app:title="@string/channel_title"
                 app:iconSpaceReserved="false"

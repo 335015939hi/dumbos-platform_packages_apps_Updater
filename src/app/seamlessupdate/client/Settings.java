@@ -30,7 +30,13 @@ public class Settings extends CollapsingToolbarBaseActivity {
     private static final String KEY_REQUIRES_CHARGING = "requires_charging";
     private static final String KEY_IDLE_REBOOT = "idle_reboot";
     private static final String KEY_CHECK_FOR_UPDATES = "check_for_updates";
+    private static final String KEY_CHECK_FREQUENCY = "check_frequency";
+    private static final String KEY_UPDATE_BEHAVIOR = "update_behavior";
     static final String KEY_WAITING_FOR_REBOOT = "waiting_for_reboot";
+
+    static final int UPDATE_BEHAVIOR_AUTO_INSTALL = 0;
+    static final int UPDATE_BEHAVIOR_AUTO_DOWNLOAD = 1;
+    static final int UPDATE_BEHAVIOR_NOTIFY = 2;
 
     static SharedPreferences getPreferences(final Context context) {
         final Context deviceContext = context.createDeviceProtectedStorageContext();
@@ -72,6 +78,16 @@ public class Settings extends CollapsingToolbarBaseActivity {
     static boolean getRequiresCharging(final Context context) {
         return getPreferences(context).getBoolean(KEY_REQUIRES_CHARGING,
                 Boolean.parseBoolean(context.getString(R.string.requires_charging_default)));
+    }
+
+    static long getCheckFrequency(final Context context) {
+        return Long.parseLong(getPreferences(context).getString(KEY_CHECK_FREQUENCY,
+                context.getString(R.string.check_frequency_default)));
+    }
+
+    static int getUpdateBehavior(final Context context) {
+        return Integer.parseInt(getPreferences(context).getString(KEY_UPDATE_BEHAVIOR,
+                context.getString(R.string.update_behavior_default)));
     }
 
     static boolean getIdleReboot(final Context context) {
@@ -164,6 +180,7 @@ public class Settings extends CollapsingToolbarBaseActivity {
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             switch (key) {
                 case KEY_CHANNEL:
+                case KEY_CHECK_FREQUENCY:
                 case KEY_BATTERY_NOT_LOW:
                 case KEY_REQUIRES_CHARGING:
                     if (!getPreferences(requireContext()).getBoolean(KEY_WAITING_FOR_REBOOT, false)) {

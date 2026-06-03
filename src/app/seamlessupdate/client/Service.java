@@ -46,6 +46,7 @@ public class Service extends IntentService {
     private static final String TAG = "Service";
     static final String INTENT_EXTRA_NETWORK = "network";
     static final String INTENT_EXTRA_IS_USER_INITIATED = "is_user_initiated";
+    static final String INTENT_EXTRA_USER_REQUESTED_INSTALL = "user_requested_install";
     private static final int CONNECT_TIMEOUT = 30000;
     private static final int READ_TIMEOUT = 30000;
     private static final File CARE_MAP_PATH = new File("/data/ota_package/care_map.pb");
@@ -149,7 +150,8 @@ public class Service extends IntentService {
     }
 
     private void onDownloadFinished(final boolean streaming, final long targetBuildDate,
-            final String targetIncremental, final String channel) throws IOException, GeneralSecurityException {
+            final String targetIncremental, final String channel, final boolean installAfterVerify)
+            throws IOException, GeneralSecurityException {
         try {
             notificationHandler.showVerifyNotification(0);
             RecoverySystem.verifyPackage(UPDATE_PATH, (int progress) -> {
@@ -241,6 +243,12 @@ public class Service extends IntentService {
             try (final var propertiesReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(payloadProperties)))) {
                 headerKeyValuePairs = propertiesReader.lines().toArray(String[]::new);
             }
+            if (!installAfterVerify) {
+                Log.d(TAG, "update downloaded and verified; notifying user to install manually");
+                notificationHandler.showUpdateDownloadedNotification();
+                mUpdating = false;
+                return;
+            }
             applyUpdate(streaming, payloadOffset, headerKeyValuePairs, sourceIncremental != null);
         } catch (final GeneralSecurityException e) {
             UPDATE_PATH.delete();
@@ -265,6 +273,8 @@ public class Service extends IntentService {
         final Network network = intent.getParcelableExtra(INTENT_EXTRA_NETWORK, Network.class);
         final var serviceIsUserInitiated = intent.getBooleanExtra(INTENT_EXTRA_IS_USER_INITIATED, false);
         if (serviceIsUserInitiated) Log.d(TAG, "onHandleIntent() – service is user-initiated");
+        final var userRequestedInstall = intent.getBooleanExtra(INTENT_EXTRA_USER_REQUESTED_INSTALL, false);
+        if (userRequestedInstall) Log.d(TAG, "onHandleIntent() – install requested by user");
 
         final PowerManager pm = getSystemService(PowerManager.class);
         final WakeLock wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Updater:" + TAG);
@@ -316,6 +326,16 @@ public class Service extends IntentService {
                 throw new GeneralSecurityException("targetChannel: " + targetChannel + " does not match channel: " + channel);
             }
 
+            final int updateBehavior = Settings.getUpdateBehavior(this);
+            if (updateBehavior == Settings.UPDATE_BEHAVIOR_NOTIFY && !userRequestedInstall) {
+                Log.d(TAG, "update available; only notifying per update behavior setting");
+                notificationHandler.showUpdateAvailableNotification();
+                mUpdating = false;
+                return;
+            }
+            final boolean installAfterVerify = userRequestedInstall
+                    || updateBehavior == Settings.UPDATE_BEHAVIOR_AUTO_INSTALL;
+
             notificationHandler.showDownloadNotification(0, 100);
 
             String downloadFile = preferences.getString(PREFERENCE_DOWNLOAD_FILE, null);
@@ -341,7 +361,7 @@ public class Service extends IntentService {
                 final int responseCode = connection.getResponseCode();
                 if (responseCode == HTTP_RANGE_NOT_SATISFIABLE) {
                     Log.d(TAG, "download completed previously");
-                    onDownloadFinished(streaming, targetBuildDate, targetIncremental, channel);
+                    onDownloadFinished(streaming, targetBuildDate, targetIncremental, channel, installAfterVerify);
                     return;
                 }
                 if (responseCode == HTTP_NOT_FOUND && incrementalUpdate.equals(downloadFile)) {
@@ -418,7 +438,7 @@ public class Service extends IntentService {
             }
 
             Log.d(TAG, "download completed");
-            onDownloadFinished(streaming, targetBuildDate, targetIncremental, channel);
+            onDownloadFinished(streaming, targetBuildDate, targetIncremental, channel, installAfterVerify);
         } catch (GeneralSecurityException | IOException | ServiceSpecificException e) {
             Log.e(TAG, "failed to download and install update", e);
             notificationHandler.showFailureNotification(e.getMessage());

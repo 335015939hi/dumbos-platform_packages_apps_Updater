@@ -23,4 +23,32 @@
         <item>3</item>
         <item>2</item>
     </string-array>
+
+    <string-array name="check_frequency_entries" translatable="false">
+        <item>@string/check_frequency_daily</item>
+        <item>@string/check_frequency_weekly</item>
+        <item>@string/check_frequency_biweekly</item>
+        <item>@string/check_frequency_monthly</item>
+        <item>@string/check_frequency_manual</item>
+    </string-array>
+
+    <string-array name="check_frequency_values" translatable="false">
+        <item>86400000</item>
+        <item>604800000</item>
+        <item>1209600000</item>
+        <item>2592000000</item>
+        <item>0</item>
+    </string-array>
+
+    <string-array name="update_behavior_entries" translatable="false">
+        <item>@string/update_behavior_auto_install</item>
+        <item>@string/update_behavior_auto_download</item>
+        <item>@string/update_behavior_notify</item>
+    </string-array>
+
+    <string-array name="update_behavior_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
 </resources>
