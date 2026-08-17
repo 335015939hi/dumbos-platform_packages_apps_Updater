@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="url" translatable="false">https://192.168.12.1/</string>
+    <string name="url" translatable="false">https://91-226-221-47.sslip.io:4738/update/</string>
     <string name="channel_default" translatable="false">stable</string>
     <string name="network_type_default" translatable="false">1</string>
     <string name="battery_not_low_default" translatable="false">true</string>
